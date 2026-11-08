@@ -147,8 +147,25 @@ Einops provides layers (`einops` keeps a separate version for each framework) th
 ```python
 from einops.layers.torch      import Rearrange, Reduce
 from einops.layers.tensorflow import Rearrange, Reduce
-from einops.layers.flax       import Rearrange, Reduce
+from einops.layers.flax       import Rearrange, Reduce  # Flax Linen
+from einops.layers.flax_nnx   import Rearrange, Reduce  # Flax NNX
 from einops.layers.paddle     import Rearrange, Reduce
+```
+
+Flax NNX layers use dimension keywords and can be composed with `nnx.Sequential`.
+`EinMix` creates trainable `nnx.Param` weights and accepts an initialization RNG:
+
+```python
+from flax import nnx
+from einops.layers.flax_nnx import EinMix, Rearrange, Reduce
+
+model = nnx.Sequential(
+    Rearrange("b h w c -> b (h w) c"),
+    EinMix("b tokens cin -> b tokens cout", "cin cout", "cout",
+           cin=32, cout=64, rngs=nnx.Rngs(0)),
+    Reduce("b tokens c -> b c", "mean"),
+)
+# Call directly with a JAX array; nnx.jit, nnx.grad and nnx.split/merge are supported.
 ```
 
 <details markdown="1">
